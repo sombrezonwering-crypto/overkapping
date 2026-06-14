@@ -7,19 +7,19 @@
     <style>
         /* === BASIS APP STIJL === */
         html, body {
-            height: 100%; margin: 0; padding: 0; overflow: hidden;
+            margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #eef2f5; -webkit-text-size-adjust: 100%;
         }
 
         #app-container {
-            display: flex; flex-direction: column; height: 100dvh; padding: 10px; box-sizing: border-box;
+            display: flex; flex-direction: column; padding: 10px; box-sizing: border-box;
             max-width: 1400px; margin: 0 auto;
         }
 
         /* === HEADER === */
         .header-box {
-            flex: 0 0 auto; background: white; padding: 15px; border-radius: 10px;
+            background: white; padding: 15px; border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #d1d1d6;
             display: grid; grid-template-columns: 1fr; gap: 10px;
         }
@@ -27,7 +27,7 @@
 
         /* === SCROLLEND MIDDENSTUK (DASHBOARD) === */
         .dashboard-wrap {
-            flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px;
+            padding-bottom: 20px;
             display: grid; grid-template-columns: 1fr; gap: 15px; align-content: start;
         }
         @media(min-width:768px){ .dashboard-wrap { grid-template-columns: repeat(2, 1fr); } }
@@ -69,8 +69,8 @@
 
         /* === FOOTER === */
         .footer-box {
-            flex: 0 0 auto; background: white; padding: 10px; border-radius: 10px; border: 1px solid #d1d1d6;
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;
+            background: white; padding: 10px; border-radius: 10px; border: 1px solid #d1d1d6;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; margin-bottom: 40px;
         }
         .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; }
         .btn-send { background: #f39c12; }
@@ -613,15 +613,18 @@
     // ============================================================================
     // REKENMOTOR (EVENT DRIVEN)
     // ============================================================================
+    
+    // Prijzen professioneel afronden op hele euro's
     function formatGeld(bedrag) {
-        if (bedrag === 0) return "€ 0,00";
-        return '€ ' + bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (bedrag === 0) return "€ 0,-";
+        return '€ ' + Math.round(bedrag).toLocaleString('nl-NL') + ',-';
     }
 
     function voegOfferteRegelToe(beschrijving, inkoopPrijs) {
         var verkoopIncl = 0;
         if (inkoopPrijs > 0) {
-            verkoopIncl = inkoopPrijs * MARGE_FACTOR * 1.21;
+            // Reken exact uit, en rond daarna direct af op een hele Euro
+            verkoopIncl = Math.round(inkoopPrijs * MARGE_FACTOR * 1.21);
         }
         window.offerteRegels.push({ desc: beschrijving, prijs: verkoopIncl });
     }
@@ -881,6 +884,9 @@
             voegOfferteRegelToe(`Losse montagematerialen (Afdichting, bevestiging, afvoer)`, inkoopMat);
         }
 
+        gTotaalEx = vBasisEx + vWandenEx + vOptiesEx; // Dit is alleen nog voor de interne bon
+        
+        // De totaalprijs is nu letterlijk de optelsom van alle afgeronde bedragen
         gTotaalIncl = 0;
         window.offerteRegels.forEach(r => gTotaalIncl += r.prijs);
 
