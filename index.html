@@ -9,8 +9,8 @@
         html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eef2f5; -webkit-text-size-adjust: 100%; }
         #app-container { display: block; padding: 10px; box-sizing: border-box; max-width: 1400px; margin: 0 auto; }
 
-        /* === STICKY HEADER === */
-        .header-box { position: sticky; top: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 8px 15px rgba(0,0,0,0.1); margin-bottom: 20px; border: 2px solid #d1d1d6; display: grid; grid-template-columns: 1fr; gap: 10px; }
+        /* === HEADER === */
+        .header-box { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #d1d1d6; display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media(min-width:768px){ .header-box { grid-template-columns: 1.5fr 1fr; } }
 
         /* === SCROLLEND MIDDENSTUK (DASHBOARD) === */
@@ -56,7 +56,7 @@
         .radio-btn { flex: 1; text-align: center; background: #f2f2f7; border: 1px solid #c7c7cc; padding: 12px 5px; border-radius: 6px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; transition: 0.2s; }
         .radio-btn.active { background: #007aff; color: white; border-color: #007aff; }
 
-        @media print { .no-print { display: none; } #app-container { height: auto; display: block; } .header-box { box-shadow: none; border: 1px solid #000; position: static; } }
+        @media print { .no-print { display: none; } #app-container { height: auto; display: block; } .header-box { box-shadow: none; border: 1px solid #000; } }
     </style>
 </head>
 <body onload="updateSysteemUI()">
@@ -344,12 +344,28 @@
                 </div>
                 <div class="form-group">
                     <label style="color:#e67e22;">Zonwering (Veranda)</label>
-                    <select id="zonwering">
+                    <select id="zonwering" onchange="updateSysteemUI()">
                         <option value="Nee">Geen zonwering</option>
                         <option value="Onderdak">Onderdak</option>
                         <option value="Bovendak">Bovendak</option>
                     </select>
                 </div>
+                
+                <div id="zonwering_opties_groep" style="display:none; border-left: 3px solid #e67e22; padding-left: 10px; margin-top: 10px;">
+                    <div class="form-group">
+                        <label>Kleur / Doeknummer (Uit stalenboek)</label>
+                        <input type="text" id="zonwering_doek" placeholder="Bijv. Tibelly T101, of N.t.b.">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Bediening (Somfy IO)</label>
+                        <select id="zonwering_zender">
+                            <option value="Somfy Situo 1 io (1-kanaals)">Somfy Situo 1 io (1-kanaals)</option>
+                            <option value="Somfy Situo 5 io (5-kanaals)">Somfy Situo 5 io (5-kanaals)</option>
+                            <option value="Wandschakelaar Smoove Origin io">Wandschakelaar Smoove Origin io</option>
+                        </select>
+                    </div>
+                </div>
+                
             </div>
 
             <div class="card card-price no-print">
@@ -381,19 +397,18 @@
 
 <script>
     // ============================================================================
-    // DE VASTE MARGE FACTOR (EXCLUSIEF BTW)
+    // DE VASTE MARGE FACTOR EN VARIABELEN (Ouderwets en robuust in ES5)
     // ============================================================================
-    const MARGE_FACTOR = 1.8;
-
-    let gTotaalEx = 0;
-    let gTotaalIncl = 0;
+    var MARGE_FACTOR = 1.8;
+    var gTotaalEx = 0;
+    var gTotaalIncl = 0;
     window.offerteRegels = []; 
-    window.inkoopRegels = []; // Nieuwe array puur voor de interne kantoor bon
+    window.inkoopRegels = []; 
 
     // ============================================================================
-    // DATABASE: MB PRIJZEN (EXCL BTW INKOOP)
+    // DATABASES (ES5 Compatible)
     // ============================================================================
-    const DB_MB_LINE_POLY = {
+    var DB_MB_LINE_POLY = {
         2000: { 3060: 653.64, 4060: 766.36, 5060: 863.64, 6060: 970.00, 7060: 1088.18, 8060: 1255.45, 9060: 1513.64, 10060: 1634.55, 11060: 1834.55, 12060: 2072.73 },
         2500: { 3060: 798.18, 4060: 895.45, 5060: 1063.64, 6060: 1200.00, 7060: 1322.73, 8060: 1429.09, 9060: 1802.73, 10060: 1950.00, 11060: 2159.09, 12060: 2200.00 },
         3000: { 3060: 889.09, 4060: 1040.00, 5060: 1234.55, 6060: 1340.91, 7060: 1470.00, 8060: 1578.18, 9060: 2018.18, 10060: 2250.00, 11060: 2381.82, 12060: 2545.45 },
@@ -403,7 +418,7 @@
         5000: { 3060: 1522.73, 4060: 1613.64, 5060: 1818.18, 6060: 2179.09, 7060: 2372.73, 8060: 2609.09, 9060: 2995.45, 10060: 3500.00, 11060: 3931.82, 12060: 4117.27 }
     };
 
-    const DB_MB_LINE_GLAS = {
+    var DB_MB_LINE_GLAS = {
         2000: { 3060: 1053.64, 4060: 1252.73, 5060: 1453.64, 6060: 1654.55, 7060: 1854.55, 8060: 2055.45, 9060: 2456.36, 10060: 2706.36, 11060: 2818.18, 12060: 3408.18 },
         2500: { 3060: 1152.73, 4060: 1353.64, 5060: 1554.55, 6060: 1754.55, 7060: 1954.55, 8060: 2154.55, 9060: 2656.36, 10060: 2806.36, 11060: 3107.27, 12060: 3659.09 },
         3000: { 3060: 1353.64, 4060: 1553.64, 5060: 1804.55, 6060: 1957.27, 7060: 2255.45, 8060: 2405.45, 9060: 2857.27, 10060: 3157.27, 11060: 3458.18, 12060: 3759.09 },
@@ -411,7 +426,7 @@
         4000: { 3060: 2004.55, 4060: 2305.45, 5060: 2656.36, 6060: 2957.27, 7060: 3258.18, 8060: 3408.18, 9060: 4009.09, 10060: 4460.91, 11060: 4810.91, 12060: 5262.73 }
     };
 
-    const DB_MB_SQUARE = {
+    var DB_MB_SQUARE = {
         "Glas Helder": {
             2500: { 3000: 2730, 4000: 3140, 5000: 3562, 6000: 3959, 7000: 4683, 8000: 5096, 9000: 5721, 10000: 6073, 11000: 6607, 12000: 7157 },
             3000: { 3000: 2988, 4000: 3444, 5000: 3912, 6000: 4355, 7000: 5126, 8000: 5584, 9000: 6255, 10000: 6652, 11000: 7311, 12000: 7840 },
@@ -432,7 +447,7 @@
         }
     };
 
-    const DB_ZONWERING = {
+    var DB_ZONWERING = {
         2500: { 3060: 1535, 3500: 1593, 4060: 1654, 4500: 1819, 5060: 1914, 5500: 1938, 6060: 2030, 7060: 3188, 8060: 3307, 9060: 3638, 10060: 3826, 11060: 3873, 12060: 4060 },
         3000: { 3060: 1582, 3500: 1641, 4060: 1699, 4500: 1877, 5060: 1973, 5500: 2043, 6060: 2102, 7060: 3282, 8060: 3401, 9060: 3755, 10060: 3944, 11060: 4085, 12060: 4204 },
         3500: { 3060: 1623, 3500: 1688, 4060: 1747, 4500: 1925, 5060: 2032, 5500: 2101, 6060: 2193, 7060: 3377, 8060: 3494, 9060: 3850, 10060: 4064, 11060: 4202, 12060: 4388 },
@@ -461,8 +476,11 @@
     function getZonweringPrijs(w, d) {
         var w_staffels = [3060, 3500, 4060, 4500, 5060, 5500, 6060, 7060, 8060, 9060, 10060, 11060, 12060];
         var d_staffels = [2500, 3000, 3500, 4000, 4500, 5000];
-        var w_staf = w_staffels.find(staf => staf >= w) || 12060;
-        var d_staf = d_staffels.find(staf => staf >= d) || 5000;
+        var w_staf = 12060;
+        for(var i=0; i<w_staffels.length; i++){ if(w_staffels[i] >= w) { w_staf = w_staffels[i]; break; } }
+        var d_staf = 5000;
+        for(var j=0; j<d_staffels.length; j++){ if(d_staffels[j] >= d) { d_staf = d_staffels[j]; break; } }
+
         if (w < 3060) w_staf = 3060;
         if (d < 2500) d_staf = 2500;
         if(DB_ZONWERING[d_staf] && DB_ZONWERING[d_staf][w_staf]) return DB_ZONWERING[d_staf][w_staf];
@@ -481,13 +499,13 @@
         return {tekst: "Koker 613cm (7-Rail of groter)", prijs: 125.00}; 
     }
 
-    const DB_SPIE = {
+    var DB_SPIE = {
         "Spie Polycarbonaat": { 2000: 80.00, 2500: 80.00, 3000: 94.55, 3500: 108.18, 4000: 122.73, 4500: 136.36, 5000: 150.00 },
         "Spie Glas": { 2000: 259.09, 2500: 259.09, 3000: 331.82, 3500: 409.09, 4000: 481.82, 4500: 481.82, 5000: 481.82 },
         "Spie Aluminium": { 2000: 152.73, 2500: 152.73, 3000: 183.18, 3500: 213.64, 4000: 243.64, 4500: 274.55, 5000: 305.45 }
     };
 
-    const DB_SCHUIF = {
+    var DB_SCHUIF = {
         "Schuifwand Standaard Helder": 145.45,
         "Schuifwand Standaard Getint": 172.73,
         "Schuifwand Maatwerk Helder": 236.36,
@@ -499,68 +517,77 @@
     // ============================================================================
     function setRadio(element, waarde) {
         var btns = document.querySelectorAll('.radio-btn');
-        btns.forEach(function(b) { b.classList.remove('active'); });
+        for(var i=0; i<btns.length; i++) { btns[i].classList.remove('active'); }
         element.classList.add('active');
         document.getElementById('plaatsing_staanders').value = waarde;
-        berekenAlles();
     }
 
     function updateSysteemUI() {
-        var sys = document.getElementById('systeem').value;
-        var hint = document.getElementById('kleur_hint');
-        var opties = document.querySelectorAll('.kleur-line');
-        const kleurEl = document.getElementById('kleur');
-        
-        if(sys.includes("Lamellendak")) {
-            document.getElementById('dakbedekking_groep').style.display = 'none';
-            document.getElementById('lamel_montage_groep').style.display = 'block';
-            document.getElementById('lamel_isolatie_groep').style.display = 'block';
-            document.getElementById('rij_modules').style.display = 'flex';
-            document.getElementById('rij_liggers').style.display = 'none';
-            document.getElementById('label_platen').innerText = "Aantal Lamellen:";
-            document.getElementById('label_goot').innerText = "Totale Doorloophoogte:";
-            document.getElementById('label_maat_h').innerText = "Totale Hoogte (mm) [Lamellendak is vlak]";
-            document.getElementById('spie_l_groep').style.display = 'none';
-            document.getElementById('spie_r_groep').style.display = 'none';
-            document.getElementById('spie_l').value = "Geen"; 
-            document.getElementById('spie_r').value = "Geen"; 
-        } else {
-            document.getElementById('dakbedekking_groep').style.display = 'block';
-            document.getElementById('lamel_montage_groep').style.display = 'none';
-            document.getElementById('lamel_isolatie_groep').style.display = 'none';
-            document.getElementById('rij_modules').style.display = 'none';
-            document.getElementById('rij_liggers').style.display = 'flex';
-            document.getElementById('label_platen').innerText = "Aantal Platen:";
-            document.getElementById('label_goot').innerText = "Doorloophoogte Goot:";
-            document.getElementById('label_maat_h').innerText = "Muurhoogte (Onderkant profiel in mm)";
-            document.getElementById('spie_l_groep').style.display = 'block';
-            document.getElementById('spie_r_groep').style.display = 'block';
-        }
-
-        if(sys.includes("Square")) {
-            opties.forEach(opt => opt.style.display = 'none');
-            if (!["RAL 7016 (Antraciet)", "RAL 9005 (Zwart)"].includes(kleurEl.value)) {
-                kleurEl.value = "RAL 7016 (Antraciet)";
+        try {
+            var sys = document.getElementById('systeem').value;
+            var zonType = document.getElementById('zonwering').value;
+            var zonOpties = document.getElementById('zonwering_opties_groep');
+            var hint = document.getElementById('kleur_hint');
+            var opties = document.querySelectorAll('.kleur-line');
+            var kleurEl = document.getElementById('kleur');
+            
+            if(zonType !== "Nee") {
+                zonOpties.style.display = 'block';
+            } else {
+                zonOpties.style.display = 'none';
             }
-            hint.style.display = 'block';
-        } else {
-            opties.forEach(opt => opt.style.display = 'block');
-            hint.style.display = 'none';
+            
+            if(sys.indexOf("Lamellendak") !== -1) {
+                document.getElementById('dakbedekking_groep').style.display = 'none';
+                document.getElementById('lamel_montage_groep').style.display = 'block';
+                document.getElementById('lamel_isolatie_groep').style.display = 'block';
+                document.getElementById('rij_modules').style.display = 'flex';
+                document.getElementById('rij_liggers').style.display = 'none';
+                document.getElementById('label_platen').innerText = "Aantal Lamellen:";
+                document.getElementById('label_goot').innerText = "Totale Doorloophoogte:";
+                document.getElementById('label_maat_h').innerText = "Totale Hoogte (mm) [Lamellendak is vlak]";
+                document.getElementById('spie_l_groep').style.display = 'none';
+                document.getElementById('spie_r_groep').style.display = 'none';
+                document.getElementById('spie_l').value = "Geen"; 
+                document.getElementById('spie_r').value = "Geen"; 
+            } else {
+                document.getElementById('dakbedekking_groep').style.display = 'block';
+                document.getElementById('lamel_montage_groep').style.display = 'none';
+                document.getElementById('lamel_isolatie_groep').style.display = 'none';
+                document.getElementById('rij_modules').style.display = 'none';
+                document.getElementById('rij_liggers').style.display = 'flex';
+                document.getElementById('label_platen').innerText = "Aantal Platen:";
+                document.getElementById('label_goot').innerText = "Doorloophoogte Goot:";
+                document.getElementById('label_maat_h').innerText = "Muurhoogte (Onderkant profiel in mm)";
+                document.getElementById('spie_l_groep').style.display = 'block';
+                document.getElementById('spie_r_groep').style.display = 'block';
+            }
+
+            if(sys.indexOf("Square") !== -1) {
+                for(var i=0; i<opties.length; i++) { opties[i].style.display = 'none'; }
+                if (kleurEl.value !== "RAL 7016 (Antraciet)" && kleurEl.value !== "RAL 9005 (Zwart)") {
+                    kleurEl.value = "RAL 7016 (Antraciet)";
+                }
+                hint.style.display = 'block';
+            } else {
+                for(var j=0; j<opties.length; j++) { opties[j].style.display = 'block'; }
+                hint.style.display = 'none';
+            }
+        } catch(e) {
+            console.log("Fout in UI Update: " + e.message);
         }
-        berekenAlles();
     }
 
     // ============================================================================
-    // REKENMOTOR
+    // DE ONVERWOESTBARE REKENMOTOR
     // ============================================================================
-    
-    // Klant format: altijd hele Euro's (bijv. € 1.450,-)
+    setInterval(berekenAlles, 400);
+
     function formatGeldKlant(bedrag) {
         if (bedrag === 0) return "€ 0,-";
         return '€ ' + Math.round(bedrag).toLocaleString('nl-NL') + ',-';
     }
 
-    // Inkoop format: precies uitgerekend met centen voor interne bon (bijv. € 805,55)
     function formatGeldInkoop(bedrag) {
         if (bedrag === 0) return "€ 0,00";
         return '€ ' + bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -571,293 +598,304 @@
         if (inkoopPrijs > 0) {
             verkoopIncl = Math.round(inkoopPrijs * MARGE_FACTOR * 1.21);
         }
-        
-        // Sla beide prijzen op: de een voor de klant (UI), de ander voor de kantoorbon
         window.offerteRegels.push({ desc: beschrijving, prijs: verkoopIncl });
         window.inkoopRegels.push({ desc: beschrijving, prijs: inkoopPrijs });
     }
 
     function berekenAlles() {
-        var bIn = parseInt(document.getElementById('maat_b').value) || 0;
-        var dIn = parseInt(document.getElementById('maat_d').value) || 0;
-        var hIn = parseInt(document.getElementById('maat_h').value) || 0;
-        
-        var dak = document.getElementById('dakbedekking').value;
-        var sys = document.getElementById('systeem').value;
-        var kleur = document.getElementById('kleur').value;
-        
-        var inkoopBasis = 0, inkoopSpieL = 0, inkoopWandL = 0, inkoopSpieR = 0, inkoopWandR = 0, inkoopWandV = 0;
-        var inkoopLed = 0, inkoopIsolatie = 0, inkoopPoeren = 0, inkoopKokers = 0, inkoopMat = 0, inkoopZonwering = 0;
-        
-        var w_staffel = 0, d_staffel = 0;
-        var modules = 1; 
-
-        window.offerteRegels = []; 
-        window.inkoopRegels = []; // Reset ook de interne inkooplijst
-
-        if (sys.includes("Lamellendak")) {
-            modules = Math.ceil(bIn / 3500);
-            if (modules < 1) modules = 1;
-            var calc_b = bIn / modules;
-
-            var l_widths = [100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350];
-            var w_staf_cm = l_widths.find(w => w >= (calc_b/10)) || 350;
-            w_staffel = w_staf_cm * 10; 
+        try {
+            var bIn = parseInt(document.getElementById('maat_b').value) || 0;
+            var dIn = parseInt(document.getElementById('maat_d').value) || 0;
+            var hIn = parseInt(document.getElementById('maat_h').value) || 0;
             
-            var d_cm = dIn / 10;
-            var lamellen = Math.ceil((d_cm - 104) / 13.2) + 8; 
-            if (lamellen < 8) lamellen = 8;
-            var d_staf_cm = 104 + ((lamellen - 8) * 13.2);
-            d_staffel = d_staf_cm * 10; 
+            var dak = document.getElementById('dakbedekking').value;
+            var sys = document.getElementById('systeem').value;
+            var kleur = document.getElementById('kleur').value;
             
-            if (bIn > 0 && dIn > 0) {
-                var isVrijstaand = document.getElementById('lamel_montage').value === "Vrijstaand";
-                var basePrice = getLamelPrijs(w_staf_cm, d_staf_cm, isVrijstaand);
-                inkoopBasis = basePrice * modules;
-            }
-        } 
-        else if (sys.includes("Square")) {
-            w_staffel = Math.ceil(bIn / 1000) * 1000;
-            if(w_staffel < 3000 && w_staffel > 0) w_staffel = 3000;
-            if(w_staffel > 12000) w_staffel = 12000;
+            var inkoopBasis = 0, inkoopSpieL = 0, inkoopWandL = 0, inkoopSpieR = 0, inkoopWandR = 0, inkoopWandV = 0;
+            var inkoopLed = 0, inkoopIsolatie = 0, inkoopPoeren = 0, inkoopKokers = 0, inkoopMat = 0, inkoopZonwering = 0;
+            
+            var w_staffel = 0, d_staffel = 0;
+            var modules = 1; 
 
-            d_staffel = Math.ceil(dIn / 500) * 500;
-            if(d_staffel < 2500 && d_staffel > 0) d_staffel = 2500;
-            if(d_staffel > 4000) d_staffel = 4000; 
-            
-            if (DB_MB_SQUARE[dak] && bIn > 0 && dIn > 0) {
-                if (DB_MB_SQUARE[dak][d_staffel] && DB_MB_SQUARE[dak][d_staffel][w_staffel]) {
-                    inkoopBasis = DB_MB_SQUARE[dak][d_staffel][w_staffel];
+            window.offerteRegels = []; 
+            window.inkoopRegels = []; 
+
+            if (sys.indexOf("Lamellendak") !== -1) {
+                modules = Math.ceil(bIn / 3500);
+                if (modules < 1) modules = 1;
+                var calc_b = bIn / modules;
+
+                var l_widths = [100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350];
+                var w_staf_cm = 350;
+                for(var w_i=0; w_i<l_widths.length; w_i++) {
+                    if(l_widths[w_i] >= (calc_b/10)) { w_staf_cm = l_widths[w_i]; break; }
                 }
-            }
-        } 
-        else if (sys.includes("MB-Line") || sys.includes("Tuinkamer")) {
-            var line_widths = [3060, 4060, 5060, 6060, 7060, 8060, 9060, 10060, 11060, 12060];
-            w_staffel = line_widths.find(w => w >= bIn) || 12060;
-            if (bIn < 3060 && bIn > 0) w_staffel = 3060;
-
-            d_staffel = Math.ceil(dIn / 500) * 500;
-            if(d_staffel < 2000 && d_staffel > 0) d_staffel = 2000;
-            var maxLineD = dak.includes("Glas") ? 4000 : 5000;
-            if(d_staffel > maxLineD) d_staffel = maxLineD;
-            
-            if (bIn > 0 && dIn > 0) {
-                var m2 = (w_staffel / 1000) * (d_staffel / 1000); 
-                if (dak.includes("Polycarbonaat")) {
-                    if(DB_MB_LINE_POLY[d_staffel] && DB_MB_LINE_POLY[d_staffel][w_staffel]) {
-                        inkoopBasis = DB_MB_LINE_POLY[d_staffel][w_staffel];
-                        if (dak.includes("IQ-Relax")) inkoopBasis += (m2 * 9.09); 
-                    }
-                } else if (dak.includes("Glas")) {
-                    if(DB_MB_LINE_GLAS[d_staffel] && DB_MB_LINE_GLAS[d_staffel][w_staffel]) {
-                        inkoopBasis = DB_MB_LINE_GLAS[d_staffel][w_staffel];
-                        if (dak.includes("Opaal")) inkoopBasis += (m2 * 22.73);   
-                        if (dak.includes("Getint")) inkoopBasis += (m2 * 59.09);  
-                    }
-                }
-                if (kleur.includes("9007") || kleur.includes("7001")) {
-                    inkoopBasis = inkoopBasis * 1.05; 
-                }
-            }
-        }
-
-        if (bIn > 0 && dIn > 0) {
-            if (sys.includes("Lamellendak")) {
-                voegOfferteRegelToe(`Basis: ${sys} (${bIn}x${dIn}mm) - ${kleur} (${document.getElementById('lamel_montage').value})`, inkoopBasis);
-            } else {
-                voegOfferteRegelToe(`Basis: ${sys} (${bIn}x${dIn}mm) - ${kleur} incl. ${dak}`, inkoopBasis);
-            }
-        } else {
-            voegOfferteRegelToe(`Vul a.u.b. de maten in om de basisprijs te berekenen`, 0);
-        }
-
-        document.getElementById('calc_staffel').innerText = (bIn>0 && dIn>0) ? (w_staffel/10).toFixed(1) + " cm x " + (d_staffel/10).toFixed(1) + " cm" : "-";
-        document.getElementById('adv_modules').innerText = modules > 1 ? modules + "x gekoppeld (Samen " + bIn + "mm)" : "-";
-
-        var goot = 0;
-        if (hIn > 0) {
-            if (sys.includes("Lamellendak")) goot = hIn;
-            else if (dIn > 0) goot = Math.max(0, Math.round(hIn - ((dIn / 1000) * 140))); 
-        }
-        document.getElementById('adv_goot').innerText = (goot > 0) ? goot + " mm" : "-";
-
-        var aantal_staanders = 0, staandersTxt = "-", liggersTxt = "-", platenTxt = "-", liggerMaat = "-", staanderMaat = "-";
-        
-        if (bIn > 0 && dIn > 0) {
-            if (sys.includes("Lamellendak")) {
-                var lamelAantal = Math.ceil((dIn/10 - 104) / 13.2) + 8; if (lamelAantal < 8) lamelAantal = 8;
-                platenTxt = lamelAantal + " Lamellen (per module)";
-                liggersTxt = "N.v.t."; liggerMaat = "N.v.t.";
-                var type = document.getElementById('lamel_montage').value;
-                aantal_staanders = (type === "Vrijstaand" ? 4 : 2) * modules;
-                staandersTxt = aantal_staanders + " stuks (" + type + ")";
-            } else {
-                var aantalPlaten = Math.ceil(bIn / (dak.includes("Glas") ? 750 : 980));
-                platenTxt = aantalPlaten + " Platen";
-                liggersTxt = (aantalPlaten + 1) + " stuks"; liggerMaat = dIn + " mm";
+                w_staffel = w_staf_cm * 10; 
                 
-                if (dak.includes("Glas")) {
-                    if (bIn <= 5060) aantal_staanders = 2; else if (bIn <= 6060) aantal_staanders = (dIn <= 2500) ? 2 : 3; else if (bIn <= 8060) aantal_staanders = 3; else aantal_staanders = 4;
+                var d_cm = dIn / 10;
+                var lamellen = Math.ceil((d_cm - 104) / 13.2) + 8; 
+                if (lamellen < 8) lamellen = 8;
+                var d_staf_cm = 104 + ((lamellen - 8) * 13.2);
+                d_staffel = d_staf_cm * 10; 
+                
+                if (bIn > 0 && dIn > 0) {
+                    var isVrijstaand = document.getElementById('lamel_montage').value === "Vrijstaand";
+                    var basePrice = getLamelPrijs(w_staf_cm, d_staf_cm, isVrijstaand);
+                    inkoopBasis = basePrice * modules;
+                }
+            } 
+            else if (sys.indexOf("Square") !== -1) {
+                w_staffel = Math.ceil(bIn / 1000) * 1000;
+                if(w_staffel < 3000 && w_staffel > 0) w_staffel = 3000;
+                if(w_staffel > 12000) w_staffel = 12000;
+
+                d_staffel = Math.ceil(dIn / 500) * 500;
+                if(d_staffel < 2500 && d_staffel > 0) d_staffel = 2500;
+                if(d_staffel > 4000) d_staffel = 4000; 
+                
+                if (DB_MB_SQUARE[dak] && bIn > 0 && dIn > 0) {
+                    if (DB_MB_SQUARE[dak][d_staffel] && DB_MB_SQUARE[dak][d_staffel][w_staffel]) {
+                        inkoopBasis = DB_MB_SQUARE[dak][d_staffel][w_staffel];
+                    }
+                }
+            } 
+            else if (sys.indexOf("MB-Line") !== -1 || sys.indexOf("Tuinkamer") !== -1) {
+                var line_widths = [3060, 4060, 5060, 6060, 7060, 8060, 9060, 10060, 11060, 12060];
+                w_staffel = 12060;
+                for(var lw_i=0; lw_i<line_widths.length; lw_i++) {
+                    if(line_widths[lw_i] >= bIn) { w_staffel = line_widths[lw_i]; break; }
+                }
+                if (bIn < 3060 && bIn > 0) w_staffel = 3060;
+
+                d_staffel = Math.ceil(dIn / 500) * 500;
+                if(d_staffel < 2000 && d_staffel > 0) d_staffel = 2000;
+                var maxLineD = dak.indexOf("Glas") !== -1 ? 4000 : 5000;
+                if(d_staffel > maxLineD) d_staffel = maxLineD;
+                
+                if (bIn > 0 && dIn > 0) {
+                    var m2 = (w_staffel / 1000) * (d_staffel / 1000); 
+                    if (dak.indexOf("Polycarbonaat") !== -1) {
+                        if(DB_MB_LINE_POLY[d_staffel] && DB_MB_LINE_POLY[d_staffel][w_staffel]) {
+                            inkoopBasis = DB_MB_LINE_POLY[d_staffel][w_staffel];
+                            if (dak.indexOf("IQ-Relax") !== -1) inkoopBasis += (m2 * 9.09); 
+                        }
+                    } else if (dak.indexOf("Glas") !== -1) {
+                        if(DB_MB_LINE_GLAS[d_staffel] && DB_MB_LINE_GLAS[d_staffel][w_staffel]) {
+                            inkoopBasis = DB_MB_LINE_GLAS[d_staffel][w_staffel];
+                            if (dak.indexOf("Opaal") !== -1) inkoopBasis += (m2 * 22.73);   
+                            if (dak.indexOf("Getint") !== -1) inkoopBasis += (m2 * 59.09);  
+                        }
+                    }
+                    if (kleur.indexOf("9007") !== -1 || kleur.indexOf("7001") !== -1) {
+                        inkoopBasis = inkoopBasis * 1.05; 
+                    }
+                }
+            }
+
+            if (bIn > 0 && dIn > 0) {
+                if (sys.indexOf("Lamellendak") !== -1) {
+                    voegOfferteRegelToe("Basis: " + sys + " (" + bIn + "x" + dIn + "mm) - " + kleur + " (" + document.getElementById('lamel_montage').value + ")", inkoopBasis);
                 } else {
-                    if (bIn <= 5060) aantal_staanders = 2; else if (bIn <= 6060) aantal_staanders = (dIn <= 4500) ? 2 : 3; else if (bIn <= 9060) aantal_staanders = 3; else aantal_staanders = 4;
+                    voegOfferteRegelToe("Basis: " + sys + " (" + bIn + "x" + dIn + "mm) - " + kleur + " incl. " + dak, inkoopBasis);
                 }
-                staandersTxt = aantal_staanders + " stuks";
+            } else {
+                voegOfferteRegelToe("Vul a.u.b. de maten in om de basisprijs te berekenen", 0);
             }
-            staanderMaat = goot > 0 ? goot + " mm (of zagen)" : "-";
-        }
-        
-        document.getElementById('adv_platen').innerText = platenTxt;
-        document.getElementById('adv_liggers').innerText = liggersTxt;
-        document.getElementById('adv_staanders').innerText = staandersTxt;
-        document.getElementById('adv_ligger_maat').innerText = liggerMaat;
-        document.getElementById('adv_staander_maat').innerText = staanderMaat;
 
-        var d_spie_staffel = Math.ceil(dIn / 500) * 500; 
-        if(d_spie_staffel < 2000) d_spie_staffel = 2000;
+            document.getElementById('calc_staffel').innerText = (bIn>0 && dIn>0) ? (w_staffel/10).toFixed(1) + " cm x " + (d_staffel/10).toFixed(1) + " cm" : "-";
+            document.getElementById('adv_modules').innerText = modules > 1 ? modules + "x gekoppeld (Samen " + bIn + "mm)" : "-";
 
-        function calcCombinatie(spieVal, wandVal, breedteStrak) {
-            var lines = [];
-            var res = { tekst: "Open", inkoopS: 0, inkoopW: 0 };
+            var goot = 0;
+            if (hIn > 0) {
+                if (sys.indexOf("Lamellendak") !== -1) goot = hIn;
+                else if (dIn > 0) goot = Math.max(0, Math.round(hIn - ((dIn / 1000) * 140))); 
+            }
+            document.getElementById('adv_goot').innerText = (goot > 0) ? goot + " mm" : "-";
+
+            var aantal_staanders = 0, staandersTxt = "-", liggersTxt = "-", platenTxt = "-", liggerMaat = "-", staanderMaat = "-";
             
-            if (spieVal !== "Geen" && dIn > 0 && !sys.includes("Lamellendak")) {
-                var hoogteSpie = hIn - goot;
-                if (hoogteSpie > 0) {
-                    lines.push(`Spie: ${dIn - 10}B x ${hoogteSpie - 10}H mm`);
-                    if(DB_SPIE[spieVal] && DB_SPIE[spieVal][d_spie_staffel]) res.inkoopS = DB_SPIE[spieVal][d_spie_staffel];
+            if (bIn > 0 && dIn > 0) {
+                if (sys.indexOf("Lamellendak") !== -1) {
+                    var lamelAantal = Math.ceil((dIn/10 - 104) / 13.2) + 8; if (lamelAantal < 8) lamelAantal = 8;
+                    platenTxt = lamelAantal + " Lamellen (per module)";
+                    liggersTxt = "N.v.t."; liggerMaat = "N.v.t.";
+                    var type = document.getElementById('lamel_montage').value;
+                    aantal_staanders = (type === "Vrijstaand" ? 4 : 2) * modules;
+                    staandersTxt = aantal_staanders + " stuks (" + type + ")";
+                } else {
+                    var aantalPlaten = Math.ceil(bIn / (dak.indexOf("Glas") !== -1 ? 750 : 980));
+                    platenTxt = aantalPlaten + " Platen";
+                    liggersTxt = (aantalPlaten + 1) + " stuks"; liggerMaat = dIn + " mm";
+                    
+                    if (dak.indexOf("Glas") !== -1) {
+                        if (bIn <= 5060) aantal_staanders = 2; else if (bIn <= 6060) aantal_staanders = (dIn <= 2500) ? 2 : 3; else if (bIn <= 8060) aantal_staanders = 3; else aantal_staanders = 4;
+                    } else {
+                        if (bIn <= 5060) aantal_staanders = 2; else if (bIn <= 6060) aantal_staanders = (dIn <= 4500) ? 2 : 3; else if (bIn <= 9060) aantal_staanders = 3; else aantal_staanders = 4;
+                    }
+                    staandersTxt = aantal_staanders + " stuks";
+                }
+                staanderMaat = goot > 0 ? goot + " mm (of zagen)" : "-";
+            }
+            
+            document.getElementById('adv_platen').innerText = platenTxt;
+            document.getElementById('adv_liggers').innerText = liggersTxt;
+            document.getElementById('adv_staanders').innerText = staandersTxt;
+            document.getElementById('adv_ligger_maat').innerText = liggerMaat;
+            document.getElementById('adv_staander_maat').innerText = staanderMaat;
+
+            var d_spie_staffel = Math.ceil(dIn / 500) * 500; 
+            if(d_spie_staffel < 2000) d_spie_staffel = 2000;
+
+            function calcCombinatie(spieVal, wandVal, breedteStrak) {
+                var lines = [];
+                var res = { tekst: "Open", inkoopS: 0, inkoopW: 0 };
+                
+                if (spieVal !== "Geen" && dIn > 0 && sys.indexOf("Lamellendak") === -1) {
+                    var hoogteSpie = hIn - goot;
+                    if (hoogteSpie > 0) {
+                        lines.push("Spie: " + (dIn - 10) + "B x " + (hoogteSpie - 10) + "H mm");
+                        if(DB_SPIE[spieVal] && DB_SPIE[spieVal][d_spie_staffel]) res.inkoopS = DB_SPIE[spieVal][d_spie_staffel];
+                    }
+                }
+
+                if (wandVal !== "Geen" && breedteStrak > 0 && goot > 0) {
+                    if (wandVal.indexOf("Dichte") !== -1) {
+                        lines.push("Kozijn/Wand: " + (breedteStrak - 10) + "B x " + (goot - 10) + "H mm");
+                        res.inkoopW = (breedteStrak/1000) * (goot/1000) * 79; 
+                    } else if (wandVal.indexOf("Schuifwand") !== -1) {
+                        var sporen = Math.ceil(breedteStrak / 930); if (sporen < 2) sporen = 2;
+                        lines.push("Schuifwand: " + sporen + "-Rail | GlasH: " + Math.max(0, goot - 40) + "mm");
+                        if (DB_SCHUIF[wandVal]) res.inkoopW = (sporen * DB_SCHUIF[wandVal]);
+                    }
+                }
+                if (lines.length > 0) res.tekst = lines.join('\n');
+                return res;
+            }
+
+            var w_val_l = document.getElementById('wand_l').value;
+            var w_val_r = document.getElementById('wand_r').value;
+            var w_val_v = document.getElementById('wand_v').value;
+            var s_val_l = document.getElementById('spie_l').value;
+            var s_val_r = document.getElementById('spie_r').value;
+
+            var objL = calcCombinatie(s_val_l, w_val_l, dIn);
+            document.getElementById('dim_l').innerText = objL.tekst;
+            inkoopSpieL = objL.inkoopS; inkoopWandL = objL.inkoopW;
+            if(inkoopSpieL > 0) voegOfferteRegelToe("Zijkant Links: " + s_val_l, inkoopSpieL);
+            if(inkoopWandL > 0) voegOfferteRegelToe("Zijkant Links: " + w_val_l, inkoopWandL);
+
+            var objR = calcCombinatie(s_val_r, w_val_r, dIn);
+            document.getElementById('dim_r').innerText = objR.tekst;
+            inkoopSpieR = objR.inkoopS; inkoopWandR = objR.inkoopW;
+            if(inkoopSpieR > 0) voegOfferteRegelToe("Zijkant Rechts: " + s_val_r, inkoopSpieR);
+            if(inkoopWandR > 0) voegOfferteRegelToe("Zijkant Rechts: " + w_val_r, inkoopWandR);
+
+            var objV = calcCombinatie("Geen", w_val_v, bIn);
+            document.getElementById('dim_v').innerText = objV.tekst;
+            inkoopWandV = objV.inkoopW;
+            if(inkoopWandV > 0) voegOfferteRegelToe("Voorzijde: " + w_val_v, inkoopWandV);
+
+            var ledAantal = parseInt(document.getElementById('led_aantal').value) || 0;
+            var ledType = document.getElementById('led_type').value;
+            if(ledAantal > 0 && ledType !== "Geen") {
+                if (ledType === "1W" || ledType === "3W") {
+                    var prijsPerSpot = (ledType === "1W") ? 6.61 : 14.88; 
+                    var aantalTrafos = Math.ceil(ledAantal / 12);
+                    inkoopLed = (ledAantal * prijsPerSpot) + (aantalTrafos * 57.85);
+                } else if (ledType === "RGB") {
+                    inkoopLed = (ledAantal * 375.00); 
+                } else if (ledType === "Dimmer") {
+                    inkoopLed = (ledAantal * 135.00);
+                }
+                voegOfferteRegelToe("LED Verlichting: " + ledAantal + "x " + ledType, inkoopLed);
+            }
+            
+            if(sys.indexOf("Lamellendak") !== -1 && document.getElementById('lamel_isolatie').value === "Ja" && bIn > 0 && dIn > 0) {
+                var lamelM2 = (bIn/1000) * (dIn/1000);
+                inkoopIsolatie = (lamelM2 * 20.00);
+                voegOfferteRegelToe("Lamellendak Isolatie (Polyurethaanschuim)", inkoopIsolatie);
+            }
+
+            var zonType = document.getElementById('zonwering').value;
+            if (zonType !== "Nee" && bIn > 0 && dIn > 0) {
+                inkoopZonwering = getZonweringPrijs(bIn, dIn);
+                var doek = document.getElementById('zonwering_doek').value || "Nader te bepalen";
+                var zender = document.getElementById('zonwering_zender').value;
+                if(inkoopZonwering > 0) {
+                    voegOfferteRegelToe("Zonwering (" + zonType + ") incl. motor\n- Doek: " + doek + "\n- Zender: " + zender, inkoopZonwering);
                 }
             }
 
-            if (wandVal !== "Geen" && breedteStrak > 0 && goot > 0) {
-                if (wandVal.includes("Dichte")) {
-                    lines.push(`Kozijn/Wand: ${breedteStrak - 10}B x ${goot - 10}H mm`);
-                    res.inkoopW = (breedteStrak/1000) * (goot/1000) * 79; 
-                } else if (wandVal.includes("Schuifwand")) {
-                    var sporen = Math.ceil(breedteStrak / 930); if (sporen < 2) sporen = 2;
-                    lines.push(`Schuifwand: ${sporen}-Rail | GlasH: ${Math.max(0, goot - 40)}mm`);
-                    if (DB_SCHUIF[wandVal]) res.inkoopW = (sporen * DB_SCHUIF[wandVal]);
-                }
+            var poeren_keuze = document.getElementById('poeren_keuze').value;
+            var hwa_positie = document.getElementById('hwa_positie').value;
+            var hwa_count = 0;
+            if (hwa_positie === "Links" || hwa_positie === "Rechts") hwa_count = 1;
+            if (hwa_positie === "Beide") hwa_count = 2;
+            if (hwa_count > aantal_staanders) hwa_count = aantal_staanders;
+
+            var fundering_txt = "-";
+            if (poeren_keuze === "Ja" && aantal_staanders > 0) {
+                var standaard_poeren = aantal_staanders - hwa_count;
+                inkoopPoeren = (standaard_poeren * 25.00) + (hwa_count * 35.00); 
+                fundering_txt = aantal_staanders + " stuks poeren (" + (hwa_positie==="Geen" ? "Allemaal Standaard" : hwa_count + "x HWA, " + standaard_poeren + "x Std") + ")";
+                voegOfferteRegelToe("Fundering: " + aantal_staanders + "x Betonpoer (incl. HWA afvoer)", inkoopPoeren);
+            } else if (poeren_keuze === "Nee" && aantal_staanders > 0) {
+                fundering_txt = "Zelf voorzien (HWA uitloop: " + hwa_positie + ")";
             }
-            if (lines.length > 0) res.tekst = lines.join('\n');
-            return res;
-        }
+            document.getElementById('adv_fundering').innerText = fundering_txt;
 
-        var w_val_l = document.getElementById('wand_l').value;
-        var w_val_r = document.getElementById('wand_r').value;
-        var w_val_v = document.getElementById('wand_v').value;
-        var s_val_l = document.getElementById('spie_l').value;
-        var s_val_r = document.getElementById('spie_r').value;
-
-        var objL = calcCombinatie(s_val_l, w_val_l, dIn);
-        document.getElementById('dim_l').innerText = objL.tekst;
-        inkoopSpieL = objL.inkoopS; inkoopWandL = objL.inkoopW;
-        if(inkoopSpieL > 0) voegOfferteRegelToe(`Zijkant Links: ${s_val_l}`, inkoopSpieL);
-        if(inkoopWandL > 0) voegOfferteRegelToe(`Zijkant Links: ${w_val_l}`, inkoopWandL);
-
-        var objR = calcCombinatie(s_val_r, w_val_r, dIn);
-        document.getElementById('dim_r').innerText = objR.tekst;
-        inkoopSpieR = objR.inkoopS; inkoopWandR = objR.inkoopW;
-        if(inkoopSpieR > 0) voegOfferteRegelToe(`Zijkant Rechts: ${s_val_r}`, inkoopSpieR);
-        if(inkoopWandR > 0) voegOfferteRegelToe(`Zijkant Rechts: ${w_val_r}`, inkoopWandR);
-
-        var objV = calcCombinatie("Geen", w_val_v, bIn);
-        document.getElementById('dim_v').innerText = objV.tekst;
-        inkoopWandV = objV.inkoopW;
-        if(inkoopWandV > 0) voegOfferteRegelToe(`Voorzijde: ${w_val_v}`, inkoopWandV);
-
-        var ledAantal = parseInt(document.getElementById('led_aantal').value) || 0;
-        var ledType = document.getElementById('led_type').value;
-        if(ledAantal > 0 && ledType !== "Geen") {
-            if (ledType === "1W" || ledType === "3W") {
-                var prijsPerSpot = (ledType === "1W") ? 6.61 : 14.88; 
-                var aantalTrafos = Math.ceil(ledAantal / 12);
-                inkoopLed = (ledAantal * prijsPerSpot) + (aantalTrafos * 57.85);
-            } else if (ledType === "RGB") {
-                inkoopLed = (ledAantal * 375.00); 
-            } else if (ledType === "Dimmer") {
-                inkoopLed = (ledAantal * 135.00);
+            var koker_txt_array = [];
+            if (document.getElementById('fundering_koker').value === "Ja") {
+                if (w_val_l.indexOf("Schuifwand") !== -1 && dIn > 0) { var kL = getFunderingskokerInfo(dIn); inkoopKokers += kL.prijs; koker_txt_array.push("Links: " + kL.tekst); }
+                if (w_val_r.indexOf("Schuifwand") !== -1 && dIn > 0) { var kR = getFunderingskokerInfo(dIn); inkoopKokers += kR.prijs; koker_txt_array.push("Rechts: " + kR.tekst); }
+                if (w_val_v.indexOf("Schuifwand") !== -1 && bIn > 0) { var kV = getFunderingskokerInfo(bIn); inkoopKokers += kV.prijs; koker_txt_array.push("Voor: " + kV.tekst); }
+                if (inkoopKokers > 0) voegOfferteRegelToe("Funderingskokers (Geïsoleerde basis t.b.v. de schuifwanden)", inkoopKokers);
             }
-            voegOfferteRegelToe(`LED Verlichting: ${ledAantal}x ${ledType}`, inkoopLed);
-        }
-        
-        if(sys.includes("Lamellendak") && document.getElementById('lamel_isolatie').value === "Ja" && bIn > 0 && dIn > 0) {
-            var lamelM2 = (bIn/1000) * (dIn/1000);
-            inkoopIsolatie = (lamelM2 * 20.00);
-            voegOfferteRegelToe(`Lamellendak Isolatie (Polyurethaanschuim)`, inkoopIsolatie);
-        }
+            document.getElementById('adv_kokers').innerText = koker_txt_array.length > 0 ? koker_txt_array.join('\n') : "Niet geselecteerd of geen schuifwand";
 
-        var zonType = document.getElementById('zonwering').value;
-        if (zonType !== "Nee" && bIn > 0 && dIn > 0) {
-            inkoopZonwering = getZonweringPrijs(bIn, dIn);
-            if(inkoopZonwering > 0) {
-                voegOfferteRegelToe(`Zonwering (${zonType}) inclusief Somfy Motor`, inkoopZonwering);
+            var aKitT = parseInt(document.getElementById('mat_kit_t').value) || 0;
+            var aKitG = parseInt(document.getElementById('mat_kit_g').value) || 0;
+            var aBlad = parseInt(document.getElementById('mat_blad').value) || 0;
+            var aPvc  = parseInt(document.getElementById('mat_pvc').value) || 0;
+            var aBocht= parseInt(document.getElementById('mat_bocht').value) || 0;
+            var aTap  = parseInt(document.getElementById('mat_tap').value) || 0;
+            var aStaal= parseInt(document.getElementById('mat_staal').value) || 0;
+
+            inkoopMat = (aKitT * 5.45) + (aKitG * 8.18) + (aBlad * 4.55) + (aPvc * 12.40) + (aBocht * 5.79) + (aTap * 16.36) + (aStaal * 136.36);
+            if (inkoopMat > 0) {
+                voegOfferteRegelToe("Losse montagematerialen (Afdichting, bevestiging, afvoer)", inkoopMat);
             }
-        }
 
-        var poeren_keuze = document.getElementById('poeren_keuze').value;
-        var hwa_positie = document.getElementById('hwa_positie').value;
-        var hwa_count = 0;
-        if (hwa_positie === "Links" || hwa_positie === "Rechts") hwa_count = 1;
-        if (hwa_positie === "Beide") hwa_count = 2;
-        if (hwa_count > aantal_staanders) hwa_count = aantal_staanders;
+            // HIER IS DE CORRECTIE VAN DE ERROR
+            var vBasisEx  = inkoopBasis * MARGE_FACTOR;
+            var vWandenEx = (inkoopSpieL + inkoopWandL + inkoopSpieR + inkoopWandR + inkoopWandV) * MARGE_FACTOR;
+            var vOptiesEx = (inkoopLed + inkoopIsolatie + inkoopZonwering + inkoopPoeren + inkoopKokers + inkoopMat) * MARGE_FACTOR; 
 
-        var fundering_txt = "-";
-        if (poeren_keuze === "Ja" && aantal_staanders > 0) {
-            var standaard_poeren = aantal_staanders - hwa_count;
-            inkoopPoeren = (standaard_poeren * 25.00) + (hwa_count * 35.00); 
-            fundering_txt = aantal_staanders + " stuks poeren (" + (hwa_positie==="Geen" ? "Allemaal Standaard" : hwa_count + "x HWA, " + standaard_poeren + "x Std") + ")";
-            voegOfferteRegelToe(`Fundering: ${aantal_staanders}x Betonpoer (incl. HWA afvoer)`, inkoopPoeren);
-        } else if (poeren_keuze === "Nee" && aantal_staanders > 0) {
-            fundering_txt = "Zelf voorzien (HWA uitloop: " + hwa_positie + ")";
-        }
-        document.getElementById('adv_fundering').innerText = fundering_txt;
+            gTotaalEx = vBasisEx + vWandenEx + vOptiesEx; 
+            
+            gTotaalIncl = 0;
+            var nieuweLijstHtml = '';
+            for(var r_i=0; r_i<window.offerteRegels.length; r_i++) {
+                var r = window.offerteRegels[r_i];
+                gTotaalIncl += r.prijs;
+                nieuweLijstHtml += '<div class="res-row"><span class="res-label" style="color:#d1d1d6;">' + r.desc.replace(/\n/g, '<br>') + '</span><span class="res-val" style="color:#fff;">' + formatGeldKlant(r.prijs) + '</span></div>';
+            }
 
-        var koker_txt_array = [];
-        if (document.getElementById('fundering_koker').value === "Ja") {
-            if (w_val_l.includes("Schuifwand") && dIn > 0) { var kL = getFunderingskokerInfo(dIn); inkoopKokers += kL.prijs; koker_txt_array.push("Links: " + kL.tekst); }
-            if (w_val_r.includes("Schuifwand") && dIn > 0) { var kR = getFunderingskokerInfo(dIn); inkoopKokers += kR.prijs; koker_txt_array.push("Rechts: " + kR.tekst); }
-            if (w_val_v.includes("Schuifwand") && bIn > 0) { var kV = getFunderingskokerInfo(bIn); inkoopKokers += kV.prijs; koker_txt_array.push("Voor: " + kV.tekst); }
-            if (inkoopKokers > 0) voegOfferteRegelToe(`Funderingskokers (Geïsoleerde basis t.b.v. de schuifwanden)`, inkoopKokers);
-        }
-        document.getElementById('adv_kokers').innerText = koker_txt_array.length > 0 ? koker_txt_array.join('\n') : "Niet geselecteerd of geen schuifwand";
+            var uiLijst = document.getElementById('ui_offerte_lijst');
+            if(uiLijst.innerHTML !== nieuweLijstHtml) {
+                uiLijst.innerHTML = nieuweLijstHtml;
+            }
 
-        var aKitT = parseInt(document.getElementById('mat_kit_t').value) || 0;
-        var aKitG = parseInt(document.getElementById('mat_kit_g').value) || 0;
-        var aBlad = parseInt(document.getElementById('mat_blad').value) || 0;
-        var aPvc  = parseInt(document.getElementById('mat_pvc').value) || 0;
-        var aBocht= parseInt(document.getElementById('mat_bocht').value) || 0;
-        var aTap  = parseInt(document.getElementById('mat_tap').value) || 0;
-        var aStaal= parseInt(document.getElementById('mat_staal').value) || 0;
-
-        inkoopMat = (aKitT * 5.45) + (aKitG * 8.18) + (aBlad * 4.55) + (aPvc * 12.40) + (aBocht * 5.79) + (aTap * 16.36) + (aStaal * 136.36);
-        if (inkoopMat > 0) {
-            voegOfferteRegelToe(`Losse montagematerialen (Afdichting, bevestiging, afvoer)`, inkoopMat);
-        }
-
-        gTotaalEx = vBasisEx + vWandenEx + vOptiesEx; 
-        
-        gTotaalIncl = 0;
-        var nieuweLijstHtml = '';
-        window.offerteRegels.forEach(function(r) {
-            gTotaalIncl += r.prijs;
-            nieuweLijstHtml += '<div class="res-row"><span class="res-label" style="color:#d1d1d6;">' + r.desc + '</span><span class="res-val" style="color:#fff;">' + formatGeldKlant(r.prijs) + '</span></div>';
-        });
-
-        var uiLijst = document.getElementById('ui_offerte_lijst');
-        if(uiLijst.innerHTML !== nieuweLijstHtml) {
-            uiLijst.innerHTML = nieuweLijstHtml;
-        }
-
-        var nieuwTotaal = formatGeldKlant(gTotaalIncl);
-        if(document.getElementById('prijs_totaal_incl').innerText !== nieuwTotaal) {
-            document.getElementById('prijs_totaal_incl').innerText = nieuwTotaal;
+            var nieuwTotaal = formatGeldKlant(gTotaalIncl);
+            if(document.getElementById('prijs_totaal_incl').innerText !== nieuwTotaal) {
+                document.getElementById('prijs_totaal_incl').innerText = nieuwTotaal;
+            }
+        } catch(error) {
+            document.getElementById('prijs_totaal_incl').innerText = "FOUT";
+            document.getElementById('ui_offerte_lijst').innerHTML = '<div style="color:#e74c3c; font-weight:bold; padding:10px; border:2px solid #e74c3c; background:#fadbd8; border-radius:6px;">⚠️ Systeem Fout: ' + error.message + '<br><small>Stuur een screenshot hiervan naar de bouwer.</small></div>';
         }
     }
-
-    // EVENT LISTENERS VOOR REKENMOTOR
-    document.querySelectorAll('input, select, textarea').forEach(el => {
-        el.addEventListener('input', berekenAlles);
-        el.addEventListener('change', berekenAlles);
-    });
 
     // ============================================================================
     // PDOK ADRES ZOEKEN (TWEERICHTINGSVERKEER)
@@ -875,26 +913,26 @@
         if (!hnVal) return; 
 
         function zoekViaPostcode() {
-            fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${pcVal}+${hnVal}&fq=type:adres&fl=straatnaam,woonplaatsnaam`)
-                .then(r => r.json())
-                .then(d => {
+            fetch("https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=" + pcVal + "+" + hnVal + "&fq=type:adres&fl=straatnaam,woonplaatsnaam")
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
                     if (d.response.numFound > 0 && d.response.docs[0].straatnaam) {
                         str.value = d.response.docs[0].straatnaam + ", " + d.response.docs[0].woonplaatsnaam;
                     }
-                }).catch(e => console.log("Fout bij ophalen straat"));
+                }).catch(function(e) { console.log("Fout bij ophalen straat"); });
         }
 
         function zoekViaStraat() {
             var query = encodeURIComponent(strVal + " " + hnVal);
-            fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${query}&fq=type:adres&fl=postcode,straatnaam,woonplaatsnaam`)
-                .then(r => r.json())
-                .then(d => {
+            fetch("https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=" + query + "&fq=type:adres&fl=postcode,straatnaam,woonplaatsnaam")
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
                     if (d.response.numFound > 0) {
                         var adres = d.response.docs[0];
                         if (adres.postcode) pc.value = adres.postcode;
                         if (adres.straatnaam) str.value = adres.straatnaam + ", " + adres.woonplaatsnaam;
                     }
-                }).catch(e => console.log("Fout bij ophalen postcode"));
+                }).catch(function(e) { console.log("Fout bij ophalen postcode"); });
         }
 
         if (bronVeld === 'pc' && pcVal.length >= 6) { zoekViaPostcode(); } 
@@ -924,14 +962,14 @@
         btn.innerText = "⏳ BEZIG MET GENEREREN..."; btn.disabled = true;
 
         var sys = document.getElementById('systeem').value;
+        var zon = document.getElementById('zonwering').value;
         
-        // --- DEEL 1: INTERNE BESTELBON ---
         var bon = "=== 1. INTERNE WERKBON & INKOOP ===\n\n";
         bon += "--- KLANTGEGEVENS ---\nKlant: " + naam + "\nTel: " + document.getElementById('telefoon').value + "\nAdres: " + str.value + " " + hn.value + " (" + pc.value + ")\nDatum: " + document.getElementById('datum').value + "\n\n";
         bon += "--- SYSTEEM ---\nSysteem  : " + sys + "\nKleur    : " + document.getElementById('kleur').value + "\nGoot Type: " + document.getElementById('goot_type').value + "\n\n";
         bon += "--- MATEN & DAK ---\nBreedte  : " + b + " mm (Staffel: " + document.getElementById('calc_staffel').innerText + ")\nDiepte   : " + document.getElementById('maat_d').value + " mm\n";
         
-        if (sys.includes("Lamellendak")) {
+        if (sys.indexOf("Lamellendak") !== -1) {
             bon += "Hoogte   : " + document.getElementById('maat_h').value + " mm (Plat dak)\n";
             bon += "Lamellen : " + document.getElementById('adv_platen').innerText + "\nMontage  : " + document.getElementById('lamel_montage').value + "\nModules  : " + document.getElementById('adv_modules').innerText + "\nIsolatie : " + document.getElementById('lamel_isolatie').value + "\n\n";
         } else {
@@ -957,27 +995,33 @@
         bon += "Fundering: " + document.getElementById('adv_fundering').innerText + "\n";
         bon += "Kokers   : \n" + document.getElementById('adv_kokers').innerText + "\n";
         bon += "Stroom   : " + document.getElementById('elektra_positie').value + "\n";
-        bon += "Licht    : " + (ledT !== "Geen" ? ledA + "x " + ledT : "Geen") + "\nZonwering: " + document.getElementById('zonwering').value + "\n\n";
-        bon += "BIJZONDERHEDEN:\n" + (document.getElementById('opmerkingen').value || "Geen bijzonderheden doorgegeven.") + "\n\n";
+        bon += "Licht    : " + (ledT !== "Geen" ? ledA + "x " + ledT : "Geen") + "\n";
+        
+        bon += "Zonwering: " + zon + "\n";
+        if(zon !== "Nee") {
+            bon += " -> Doek  : " + (document.getElementById('zonwering_doek').value || "Nader te bepalen") + "\n";
+            bon += " -> Bedien: " + document.getElementById('zonwering_zender').value + "\n";
+        }
 
-        // De nieuwe uitgebreide inkoopprijzen op de bestelbon!
+        bon += "\nBIJZONDERHEDEN:\n" + (document.getElementById('opmerkingen').value || "Geen bijzonderheden doorgegeven.") + "\n\n";
+
         bon += "--- 7. FINANCIEEL OVERZICHT (INKOOP EXCL. BTW) ---\n";
-        let totaalInkoop = 0;
-        window.inkoopRegels.forEach(function(regel) {
-            if (regel.prijs > 0) {
-                bon += "* " + regel.desc + " : " + formatGeldInkoop(regel.prijs) + "\n";
-                totaalInkoop += regel.prijs;
+        var totaalInkoop = 0;
+        for(var ir_i=0; ir_i<window.inkoopRegels.length; ir_i++) {
+            var ir = window.inkoopRegels[ir_i];
+            if (ir.prijs > 0) {
+                bon += "* " + ir.desc.replace(/\n/g, ' | ') + " : " + formatGeldInkoop(ir.prijs) + "\n";
+                totaalInkoop += ir.prijs;
             }
-        });
+        }
         bon += "--------------------------------------------------\n";
         bon += "TOTAAL INKOOP (Ex. BTW) : " + formatGeldInkoop(totaalInkoop) + "\n";
         bon += "BEOOGDE VERKOOP (Ex. BTW): " + formatGeldInkoop(gTotaalEx) + " (Gerekend met factor " + MARGE_FACTOR + "x)\n";
         bon += "VERKOOP INCL. 21% BTW   : " + formatGeldKlant(gTotaalIncl) + "\n\n";
 
-        // --- DEEL 2: KANT-EN-KLARE KLANT OFFERTE ---
-        let aanbetaling = gTotaalIncl * 0.40;
-        let deelbetaling = gTotaalIncl * 0.20;
-        let restant = gTotaalIncl * 0.40;
+        var aanbetaling = gTotaalIncl * 0.40;
+        var deelbetaling = gTotaalIncl * 0.20;
+        var restant = gTotaalIncl * 0.40;
 
         var offerte = "Onderwerp: Vrijblijvende offerte: Uw nieuwe project\n\n";
         offerte += "Beste " + naam + ",\n\n";
@@ -985,9 +1029,10 @@
         
         offerte += "GESPECIFICEERD INVESTERINGSOVERZICHT (INCL. 21% BTW & MONTAGE)\n";
         offerte += "----------------------------------------------------------------------\n";
-        window.offerteRegels.forEach(function(regel) {
-            offerte += "* " + regel.desc + ": " + formatGeldKlant(regel.prijs) + "\n";
-        });
+        for(var or_i=0; or_i<window.offerteRegels.length; or_i++) {
+            var o_r = window.offerteRegels[or_i];
+            offerte += "* " + o_r.desc.replace(/\n/g, '\n  ') + ": " + formatGeldKlant(o_r.prijs) + "\n";
+        }
         offerte += "----------------------------------------------------------------------\n";
         offerte += "TOTAALBEDRAG INCL. 21% BTW: " + formatGeldKlant(gTotaalIncl) + "\n\n";
 
@@ -1019,19 +1064,18 @@
         offerte += "Gaat u akkoord met deze offerte? Dan plannen we de montage graag voor u in! U kunt simpelweg op deze e-mail reageren met een akkoord.\n\n";
         offerte += "Met vriendelijke groet,\n\nDennis en Jeslin de Wind\nSombre Zonwering & Overkappingen";
 
-        // VEILIGE METHODE MET TEXTAREAS: Dit zorgt ervoor dat FormSubmit alle netjes uitgelijnde regels en witregels perfect behoudt in de mail!
-        let form = document.createElement("form");
+        var form = document.createElement("form");
         form.action = "https://formsubmit.co/dennis@sombre-zonwering.nl";
         form.method = "POST";
         form.target = "_blank"; 
 
-        let tBon = document.createElement("textarea"); tBon.name = "1_INTERNE_BESTELBON"; tBon.value = bon; tBon.style.display = "none";
-        let tOff = document.createElement("textarea"); tOff.name = "2_KLANT_OFFERTE_Kopieer_Tekst"; tOff.value = offerte; tOff.style.display = "none";
+        var tBon = document.createElement("textarea"); tBon.name = "1_INTERNE_BESTELBON"; tBon.value = bon; tBon.style.display = "none";
+        var tOff = document.createElement("textarea"); tOff.name = "2_KLANT_OFFERTE_Kopieer_Tekst"; tOff.value = offerte; tOff.style.display = "none";
         
-        let iSub = document.createElement("input"); iSub.type = "hidden"; iSub.name = "_subject"; iSub.value = "Nieuwe Calculatie & Offerte: " + naam;
-        let iRep = document.createElement("input"); iRep.type = "hidden"; iRep.name = "email"; iRep.value = document.getElementById('email').value || "geen-email@opgegeven.nl";
-        let iCc  = document.createElement("input"); iCc.type = "hidden";  iCc.name = "_cc"; iCc.value = "jeslin@sombre-zonwering.nl";
-        let iCap = document.createElement("input"); iCap.type = "hidden"; iCap.name = "_captcha"; iCap.value = "false";
+        var iSub = document.createElement("input"); iSub.type = "hidden"; iSub.name = "_subject"; iSub.value = "Nieuwe Calculatie & Offerte: " + naam;
+        var iRep = document.createElement("input"); iRep.type = "hidden"; iRep.name = "email"; iRep.value = document.getElementById('email').value || "geen-email@opgegeven.nl";
+        var iCc  = document.createElement("input"); iCc.type = "hidden";  iCc.name = "_cc"; iCc.value = "jeslin@sombre-zonwering.nl";
+        var iCap = document.createElement("input"); iCap.type = "hidden"; iCap.name = "_captcha"; iCap.value = "false";
 
         form.appendChild(tBon);
         form.appendChild(tOff);
@@ -1043,9 +1087,10 @@
         document.body.appendChild(form);
         form.submit();
 
-        setTimeout(() => {
+        setTimeout(function() {
             btn.innerText = "✅ ORDER GEOPEND IN NIEUW TABBLAD";
-            btn.classList.replace('btn-send', 'btn-reset');
+            btn.classList.remove('btn-send');
+            btn.classList.add('btn-reset');
             btn.style.background = "#27ae60";
             btn.disabled = false;
         }, 1000);
