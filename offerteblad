@@ -1,14 +1,3 @@
-Dit is het moment waarop alles samenkomt. Ik heb de code op de achtergrond volledig herschreven, geordend en ontdaan van alle tijdelijke constructies.
-
-### Wat is er veranderd in deze "Golden Release":
-
-1. **De 8-graden Wiskunde-engine:** Het afschot is veranderd van de 10% vuistregel naar exacte 8 graden geometrie (`uitval × 0.1405`). De muurhoogte klopt nu op de millimeter.
-2. **De F-Profielen in de Lambrie Wanden:** Het systeem berekent nu realtime de meters F-profiel (`2x hoogte + 1x breedte`) à € 5,50/m en trekt dit direct bij de inkoopprijs van de lambrie-wand in. Je verliest hier geen marge meer op.
-3. **Dakzonwering (Boven/Onderdak):** De Soltis en Sattler doeken rekenen volautomatisch €15/m² meerprijs over het oppervlak en pakken de basistarieven uit jouw Excel Matrix.
-4. **De "High-End" Klant Offerte:** De e-mail generator is herschreven. De lelijke HTML-codes zijn eruit, fabrieksmaten ("Bestelmaat:") worden automatisch weggelaten voor de klant, en de offerte is nu prachtig opgebouwd in professionele blokken (Hoofdconstructie, Afsluitingen, Fundering, etc.) met de door ons besproken welkomsttekst.
-
-Hier is de definitieve, schone code. Overschrijf je huidige bestand hiermee en test hem uitgebreid op je iPad!
-
 ```html
 <!DOCTYPE html>
 <html lang="nl">
