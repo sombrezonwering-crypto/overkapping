@@ -652,9 +652,8 @@ function getSafePrijs(tabel, innerVal, outerVal) {
 
     return inner_row[String(i_val)] || 0;
     }
-        
-        let inner_keys = Object.keys(inner_row).map(Number).sort((a,b)=>a-b);
-        
+     
+               
         // Check of de breedtes in Centimeters staan
         let isInnerCm = inner_keys[inner_keys.length - 1] < 2000; 
         let searchInner = isInnerCm ? (innerVal / 10) : innerVal;
