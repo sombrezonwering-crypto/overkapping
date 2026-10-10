@@ -652,18 +652,8 @@ function getSafePrijs(tabel, innerVal, outerVal) {
 
     return inner_row[String(i_val)] || 0;
 }
-     
-               
-        // Check of de breedtes in Centimeters staan
-        let isInnerCm = inner_keys[inner_keys.length - 1] < 2000; 
-        let searchInner = isInnerCm ? (innerVal / 10) : innerVal;
-
-        let i_val = inner_keys.find(x => x >= searchInner);
-        if (!i_val) i_val = inner_keys[inner_keys.length - 1]; 
-
-        return inner_row[String(i_val)] || 0;
-    }
-
+                 
+      
     function getBasisPrijs(sys, dak, b, d) {
         let dakToeslagM2 = 0;
         if (dak.includes("IQ-Relax")) {
