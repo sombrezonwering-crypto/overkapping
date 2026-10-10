@@ -635,24 +635,22 @@
     // ============================================================================
     
 function getSafePrijs(tabel, innerVal, outerVal) {
-        if (!tabel) return 0;
-        let outer_keys = Object.keys(tabel).map(Number).sort((a,b)=>a-b);
-        if (outer_keys.length === 0) return 0;
-        
-        // Zoek de juiste diepte (of de max) in millimeters
-        let o_val = outer_keys.find(x => x >= outerVal);
-        if (!o_val) o_val = outer_keys[outer_keys.length - 1]; 
+    if (!tabel) return 0;
+    let outer_keys = Object.keys(tabel).map(Number).sort((a,b)=>a-b);
+    if (outer_keys.length === 0) return 0;
 
-        let inner_row = tabel[String(o_val)];
-        if (!inner_row) return 0;
-        
-        let inner_keys = Object.keys(inner_row).map(Number).sort((a,b)=>a-b);
-        
-        // Zoek de juiste breedte (of de max) in millimeters
-        let i_val = inner_keys.find(x => x >= innerVal);
-        if (!i_val) i_val = inner_keys[inner_keys.length - 1]; 
+    let o_val = outer_keys.find(x => x >= outerVal);
+    if (!o_val) o_val = outer_keys[outer_keys.length - 1];
 
-        return inner_row[String(i_val)] || 0;
+    let inner_row = tabel[String(o_val)];
+    if (!inner_row) return 0;
+
+    let inner_keys = Object.keys(inner_row).map(Number).sort((a,b)=>a-b);
+
+    let i_val = inner_keys.find(x => x >= innerVal);
+    if (!i_val) i_val = inner_keys[inner_keys.length - 1];
+
+    return inner_row[String(i_val)] || 0;
     }
         
         let inner_keys = Object.keys(inner_row).map(Number).sort((a,b)=>a-b);
