@@ -869,9 +869,10 @@ function getSafePrijs(tabel, innerVal, outerVal) {
                         if (zender === "1-kanaal") inkoop += PRIJZEN["Zender 1-kanaal"];
                         if (zender === "5-kanaal") inkoop += PRIJZEN["Zender 5-kanaal"];
                         
-                        let bestelmaatTxt = `(Bestelmaat: ${bestelB}B x ${bestelH}H mm)`;
-                        let spec = type === 'ZIP Screen' ? `Doek: ${doek}` : `Rolluik Pantser`;
-                        addOrderItem(`[${vak.titel}] ${type} (${kast}) ${bestelmaatTxt} | ${kleur} | ${spec} | Motor: ${motor}`, inkoop, 'WAND');
+                       let bestelmaatTxt = `(Bestelmaat: ${bestelB}B x ${bestelH}H mm)`;
+let spec = type === 'ZIP Screen' ? `Doek: ${doek}` : `Rolluik Pantser`;
+let zenderTxt = zender !== "Geen" ? ` | Zender: ${zender}` : ` | Zender: Geen / Koppelen`;
+addOrderItem(`[${vak.titel}] ${type} (${kast}) ${bestelmaatTxt} | ${kleur} | ${spec} | Motor: ${motor}${zenderTxt}`, inkoop, 'WAND');
                     
                     } else if (type === 'Schuifwand Glas') {
                         let sporen = Math.ceil(b / 930); if(sporen<2) sporen=2;
